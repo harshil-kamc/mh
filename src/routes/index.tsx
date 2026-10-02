@@ -14,7 +14,6 @@ import {
   CircleHelp,
   Volume2,
   VolumeX,
-  Music,
   Eye,
   ShieldCheck,
   ShieldAlert,
@@ -22,7 +21,7 @@ import {
   Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { eventConfig, phases, crew, missions } from "@/lib/event-config";
+import { eventConfig, phases, teamRoles, missions } from "@/lib/event-config";
 import { heistAudio } from "@/lib/sound";
 import { DaliMaskHero } from "@/components/DaliMaskHero";
 import { BankHeist3DWalkthrough } from "@/components/BankHeist3DWalkthrough";
@@ -46,7 +45,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "The Mystery Vault: An immersive 24-hour Money Heist-inspired technology heist hackathon. 32 crews, AI/ML & Cybersecurity, hint auctions, and vault extraction.",
+          "The Mystery Vault: An immersive 24-hour Money Heist-inspired technology heist hackathon. 32 crews, AI, Machine Learning & Cybersecurity, hint auctions, and vault extraction.",
       },
       { property: "og:title", content: "The Mystery Vault | Tech Heist Hackathon" },
       {
@@ -64,7 +63,7 @@ const nav = [
   ["Operation", "operation"],
   ["3D Bank", "blueprint"],
   ["Missions", "missions"],
-  ["Crew", "crew"],
+  ["Crew of 4", "team"],
   ["The Mask", "mask"],
   ["Control", "control"],
   ["Vault", "vault"],
@@ -84,15 +83,15 @@ const faq = [
   ],
   [
     "Which domains can crews compete in?",
-    "The proposed domains are AI/ML and Cybersecurity. There are four proposed problem statements in total; the actual briefs will be announced by the organizers.",
+    "The proposed domains are AI, Machine Learning and Cybersecurity. There are four proposed problem statements in total; the actual briefs will be announced by the organizers.",
   ],
   [
     "How does the Mission Point (MP) auction work?",
     "Each team is allotted 5,000 Mission Points to strategically bid for hints and tactical intelligence during high-pressure missions. Auction rules and hint tiers are proposed, not final.",
   ],
   [
-    "How do I join a crew and register?",
-    "Registration is not open in this preview prototype. Dates, venue, eligibility, and the official registration link will be announced soon by the organizers.",
+    "How do I build my crew and register?",
+    "In this event, participants build their own team of exactly 4 members. One member must be the Team Leader (The Professor) who guides strategy, manages hint points, and directs the timeline. The official registration portal will open soon.",
   ],
   [
     "Are the missions already announced?",
@@ -106,7 +105,6 @@ function Index() {
   const [scrollPercent, setScrollPercent] = useState(0);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [activePhase, setActivePhase] = useState(0);
-  const [dossier, setDossier] = useState<number | null>(null);
   const [mission, setMission] = useState<number | null>(null);
   const [dialog, setDialog] = useState<"registration" | "identity" | null>(null);
   const [balance, setBalance] = useState(eventConfig.missionPoints);
@@ -114,7 +112,13 @@ function Index() {
   const [auctionResult, setAuctionResult] = useState("");
   const [vaultResponse, setVaultResponse] = useState("SELECT AN OBJECT TO INSPECT THE VAULT.");
   const [remaining, setRemaining] = useState<number | null>(null);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Play background song at 70% volume on site load
+  useEffect(() => {
+    heistAudio.initBackgroundMusic();
+    setIsMuted(heistAudio.isMuted);
+  }, []);
 
   // Scroll listener for progress line and compact nav
   useEffect(() => {
@@ -158,29 +162,20 @@ function Index() {
 
   // Close modals on Escape
   useEffect(() => {
-    if (dossier === null && mission === null && !dialog) return;
+    if (mission === null && !dialog) return;
     const close = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDossier(null);
         setMission(null);
         setDialog(null);
       }
     };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [dossier, mission, dialog]);
+  }, [mission, dialog]);
 
   function handleAudioToggle() {
     const muted = heistAudio.toggleMute();
     setIsMuted(muted);
-  }
-
-  function handlePlayBellaCiao() {
-    if (isMuted) {
-      heistAudio.toggleMute();
-      setIsMuted(false);
-    }
-    heistAudio.playBellaCiaoMotif();
   }
 
   function enterVault() {
@@ -241,31 +236,19 @@ function Index() {
         </nav>
 
         <div className="flex items-center gap-3">
-          {/* Audio Synthesizer Controls */}
-          <button
-            type="button"
-            onClick={handlePlayBellaCiao}
-            className="hidden sm:inline-flex items-center gap-1.5 mono-label text-gold hover:text-foreground text-xs px-2.5 py-1.5 border border-gold/40 hover:border-gold transition-colors"
-            title="Play Bella Ciao theme snippet"
-          >
-            <Music size={13} className="text-primary animate-pulse" />
-            <span className="hidden md:inline">BELLA CIAO</span>
-          </button>
-
+          {/* Sound Toggle Button — Icon only, no text */}
           <button
             type="button"
             onClick={handleAudioToggle}
-            className="inline-flex items-center gap-1.5 mono-label text-muted-foreground hover:text-foreground px-2.5 py-1.5 border border-border transition-colors"
-            title={isMuted ? "Enable sound effects" : "Mute audio"}
+            className="h-9 w-9 inline-flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-primary transition-all duration-200 active:scale-95 cursor-pointer"
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            title={isMuted ? "Unmute audio" : "Mute audio"}
           >
             {isMuted ? (
-              <VolumeX size={15} />
+              <VolumeX size={16} />
             ) : (
-              <Volume2 size={15} className="text-primary animate-pulse" />
+              <Volume2 size={16} className="text-primary animate-pulse" />
             )}
-            <span className="text-[10px] hidden sm:inline">
-              {isMuted ? "AUDIO OFF" : "AUDIO ON"}
-            </span>
           </button>
 
           <Button variant="heist" className="nav-action" onClick={enterVault}>
@@ -321,11 +304,6 @@ function Index() {
           <DaliMaskHero />
 
           <div className="hero-inner">
-            <p className="mono-label hero-kicker">
-              <span className="status-pulse" />
-              OPERATION: MV-01 <span className="text-muted-foreground">//</span> 24-HOUR TECH HEIST
-            </p>
-
             <h1 className="display-title hero-title">
               THE
               <br />
@@ -373,12 +351,8 @@ function Index() {
           </p>
 
           <div className="hero-bottom">
-            <span className="mono-label">
-              <span className="status-pulse" /> SYSTEM STATUS:{" "}
-              <strong>OPERATIONAL // INFILTRATION READY</strong>
-            </span>
             <button
-              className="mono-label flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="mono-label flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors ml-auto"
               onClick={() => {
                 heistAudio.playClick();
                 scrollTo("operation");
@@ -413,9 +387,6 @@ function Index() {
             ========================================================================= */}
         <section className="story" id="operation">
           <div className="section-wrap" data-scroll-reveal>
-            <p className="mono-label eyebrow">
-              01 // THE <span className="mh-stamp-box text-xs">OPERATION</span>
-            </p>
             <div className="story-layout">
               <h2 className="story-quote">
                 EVERY VAULT HAS A SECRET.
@@ -438,7 +409,7 @@ function Index() {
                 </p>
                 <div className="flex flex-wrap items-center gap-3 mt-8">
                   <span className="mono-label text-gold border border-gold/30 px-3 py-1.5">
-                    AI / MACHINE LEARNING
+                    AI & MACHINE LEARNING
                   </span>
                   <span className="mono-label text-primary border border-primary/30 px-3 py-1.5">
                     CYBERSECURITY & DEFENSE
@@ -465,9 +436,6 @@ function Index() {
           <div className="section-wrap" data-scroll-reveal>
             <div className="section-head">
               <div>
-                <p className="mono-label eyebrow">
-                  02 // OPERATIONAL <span className="mh-stamp-box text-xs">BLUEPRINT</span>
-                </p>
                 <h2 className="display-title section-title">
                   FIVE PHASES.
                   <br />
@@ -499,7 +467,7 @@ function Index() {
               </div>
               <div className="phase-detail" data-number={phases[activePhase]?.number || "01"}>
                 <span className="mono-label text-gold">
-                  // OPERATION PHASE {phases[activePhase]?.number || "01"} OF 05 ·{" "}
+                  OPERATION PHASE {phases[activePhase]?.number || "01"} OF 05 ·{" "}
                   {phases[activePhase]?.timeframe}
                 </span>
                 <div>
@@ -522,28 +490,22 @@ function Index() {
                 <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/60">
                   <button
                     type="button"
-                    disabled={activePhase === 0}
                     onClick={() => {
-                      if (activePhase > 0) {
-                        heistAudio.playClick();
-                        setActivePhase(activePhase - 1);
-                      }
+                      heistAudio.playClick();
+                      setActivePhase((activePhase - 1 + phases.length) % phases.length);
                     }}
-                    className="mono-label text-xs px-3 py-2 border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors flex items-center gap-1.5"
+                    className="mono-label text-xs px-3 py-2 border border-border text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
                     title="Glide to previous phase in 3D model"
                   >
                     <ChevronLeft size={14} /> PREV PHASE
                   </button>
                   <button
                     type="button"
-                    disabled={activePhase === phases.length - 1}
                     onClick={() => {
-                      if (activePhase < phases.length - 1) {
-                        heistAudio.playClick();
-                        setActivePhase(activePhase + 1);
-                      }
+                      heistAudio.playClick();
+                      setActivePhase((activePhase + 1) % phases.length);
                     }}
-                    className="mono-label text-xs px-4 py-2 bg-primary/20 border border-primary text-foreground hover:bg-primary/30 transition-colors flex items-center gap-1.5 font-bold"
+                    className="mono-label text-xs px-4 py-2 bg-primary/20 border border-primary text-foreground hover:bg-primary/30 transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
                     title="Glide to next phase in 3D model"
                   >
                     NEXT PHASE <ArrowRight size={14} className="text-primary" />
@@ -561,23 +523,26 @@ function Index() {
         <div className="mh-laser-beam" />
 
         {/* =========================================================================
-            SECTION 03: CLASSIFIED PERSONNEL (THE HEIST CREW)
-            With authentic local squad wallpaper & classified dossiers
+            SECTION 03: ASSEMBLE YOUR CREW OF 4
+            Participants build their own squad of 4 led by The Professor
             ========================================================================= */}
-        <section className="crew-section" id="crew">
+        <section className="crew-section" id="team">
           <div className="section-wrap" data-scroll-reveal>
             <div className="section-head">
               <div>
                 <p className="mono-label eyebrow">
-                  03 // CLASSIFIED <span className="mh-stamp-box text-xs">PERSONNEL</span>
+                  03 — CREW FORMATION PROTOCOL{" "}
+                  <span className="mh-stamp-box text-xs">MANDATORY RULE</span>
                 </p>
                 <h2 className="display-title section-title">
-                  MEET THE <span className="text-primary">CREW.</span>
+                  ASSEMBLE YOUR <span className="text-primary">CREW OF 4.</span>
                 </h2>
               </div>
               <p className="section-intro">
-                Every operation needs a strategist, an infiltrator, an engineer — and a crew that
-                refuses to surrender. Click on any operative to inspect their personnel dossier.
+                In this hackathon, participants must build their own team of exactly 4 members. One
+                of them must be chosen as the Team Leader — just like The Professor in Money Heist —
+                who guides the strategy, commands hint bidding, coordinates the operations, and
+                orchestrates the final extraction.
               </p>
             </div>
 
@@ -591,9 +556,6 @@ function Index() {
                 alt="Money Heist crew in iconic red jumpsuits and Salvador Dalí masks"
               />
               <div className="crew-caption">
-                <p className="mono-label text-gold mb-3">
-                  <span className="status-pulse" /> CLASSIFIED DOSSIER FILE // 009 OPERATIVES
-                </p>
                 <h3>
                   NO ONE
                   <br />
@@ -602,22 +564,74 @@ function Index() {
               </div>
             </div>
 
-            {/* Crew Member Dossier Triggers */}
-            <div className="crew-names">
-              {crew.map((person, i) => (
-                <button
-                  className="crew-name"
-                  key={person.name}
-                  onClick={() => {
-                    heistAudio.playClick();
-                    setDossier(i);
-                  }}
-                >
-                  <span className="mono-label">{String(i + 1).padStart(2, "0")}</span>
-                  <strong>{person.name}</strong>
-                  <ArrowUpRight size={16} />
-                </button>
-              ))}
+            {/* The 4 Roles Every Participant Team Builds */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              {teamRoles.map((role) => {
+                const isLeader = role.number === "01";
+                return (
+                  <div
+                    key={role.number}
+                    className={`p-5 bg-panel border transition-all flex flex-col justify-between ${
+                      isLeader
+                        ? "border-primary/80 bg-neutral-900/90 shadow-xl shadow-primary/20 ring-1 ring-primary/40"
+                        : "border-border hover:border-gold/50 bg-neutral-950/80"
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span
+                          className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded ${
+                            isLeader
+                              ? "bg-primary text-white shadow-sm"
+                              : "bg-neutral-800 text-gold"
+                          }`}
+                        >
+                          MEMBER 0{role.number}
+                        </span>
+                        <span className="mono-label text-[10px] text-gold font-bold">
+                          {role.badge}
+                        </span>
+                      </div>
+
+                      <h3 className="font-display text-lg uppercase text-foreground leading-snug">
+                        {role.name}
+                      </h3>
+
+                      <p className="mono-label text-xs text-primary font-bold mt-2">{role.role}</p>
+
+                      <p className="text-xs text-neutral-300 leading-relaxed mt-3">
+                        {role.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-5 pt-3 border-t border-border/80 mono-label text-[10px] text-muted-foreground">
+                      <span className="text-gold font-bold block mb-1">KEY RESPONSIBILITY:</span>
+                      <span>{role.specialty}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Crew Assembly Callout Banner */}
+            <div className="mt-6 p-4 bg-primary/10 border border-primary/50 rounded-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="mh-stamp-box text-xs">TEAM DIRECTIVE</span>
+                <p className="text-xs text-neutral-200">
+                  Form your squad of 4 prior to registration. Appoint your Professor, select your
+                  tech domain, and prepare for the 24-hour breach.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  heistAudio.playClick();
+                  setDialog("registration");
+                }}
+                className="px-4 py-2 bg-primary text-white text-xs font-mono font-bold hover:bg-primary/90 transition-colors uppercase whitespace-nowrap shadow-md cursor-pointer shrink-0"
+              >
+                REGISTER SQUAD OF 4
+              </button>
             </div>
           </div>
         </section>
@@ -639,9 +653,6 @@ function Index() {
             }}
           />
           <div className="mask-copy" data-scroll-reveal>
-            <p className="mono-label text-black/80 font-mono">
-              <span className="status-pulse" /> IDENTITY PROTOCOL // ACTIVE
-            </p>
             <h2 className="display-title mt-7 text-white">
               THE
               <br />
@@ -683,9 +694,6 @@ function Index() {
           <div className="section-wrap" data-scroll-reveal>
             <div className="section-head">
               <div>
-                <p className="mono-label eyebrow">
-                  04 // LIVE SYSTEM <span className="mh-stamp-box text-xs">SIMULATION</span>
-                </p>
                 <h2 className="display-title section-title">
                   MISSION
                   <br />
@@ -703,16 +711,13 @@ function Index() {
                   <span>
                     <span className="status-pulse" /> SYSTEM ONLINE
                   </span>
-                  <span>COMMAND TELEMETRY // 001</span>
+                  <span>COMMAND TELEMETRY 001</span>
                 </div>
                 <h3>
                   CURRENT OPERATION:
                   <br />
                   <span className="text-primary">SECURITY BREACH</span>
                 </h3>
-                <p className="mono-label text-muted-foreground">
-                  MISSION STATUS / SIMULATED PROGRESS
-                </p>
                 <div className="progress-track">
                   <div className="progress-fill" />
                 </div>
@@ -741,7 +746,7 @@ function Index() {
                     "32 CREWS RECRUITED AND VERIFIED",
                     "VAULT SECURITY COUNTERMEASURES ONLINE",
                     "MISSION AUCTION CHANNEL OPEN",
-                    "ENCRYPTION KEY ACTIVE // DALI-MV01",
+                    "ENCRYPTION KEY ACTIVE: DALI-MV01",
                     "AWAITING NEXT DIRECTIVE...",
                   ].map((log, i) => (
                     <div key={log}>
@@ -772,9 +777,6 @@ function Index() {
         <section id="points">
           <div className="section-wrap auction-layout" data-scroll-reveal>
             <div>
-              <p className="mono-label eyebrow">
-                05 // THE ECONOMY OF <span className="mh-stamp-box text-xs">INFORMATION</span>
-              </p>
               <h2 className="display-title section-title">
                 MISSION
                 <br />
@@ -789,13 +791,9 @@ function Index() {
                 {balance.toLocaleString()}
                 <span className="text-3xl ml-2">MP</span>
               </div>
-              <p className="mono-label text-gold">PROPOSED SYSTEM // SUBJECT TO OFFICIAL RULES</p>
             </div>
             <div className="auction-panel">
               <div className="auction-header">
-                <p className="mono-label text-primary">
-                  <Flame size={14} className="inline mr-1" /> HINT AUCTION // SIMULATION
-                </p>
                 <h3 className="font-display font-bold text-4xl uppercase mt-5">
                   UNKNOWN VARIABLE DETECTED
                 </h3>
@@ -827,13 +825,12 @@ function Index() {
                   </button>
                 ))}
               </div>
-              <label htmlFor="bid" className="mono-label text-muted-foreground">
-                YOUR BID / MISSION POINTS
-              </label>
               <input
                 id="bid"
                 className="auction-amount"
                 type="number"
+                aria-label="Your bid in mission points"
+                placeholder="Enter bid"
                 min="500"
                 max={balance}
                 step="100"
@@ -857,9 +854,6 @@ function Index() {
           <div className="section-wrap" data-scroll-reveal>
             <div className="section-head">
               <div>
-                <p className="mono-label eyebrow">
-                  06 // ENCRYPTED <span className="mh-stamp-box text-xs">FILES</span>
-                </p>
                 <h2 className="display-title section-title">
                   MISSION
                   <br />
@@ -886,9 +880,6 @@ function Index() {
                     <LockKeyhole size={14} className="text-primary" />
                   </div>
                   <h3>{name}</h3>
-                  <span className="mono-label text-primary">
-                    CLASSIFIED / VIEW FILE <ArrowUpRight size={13} className="inline ml-1" />
-                  </span>
                 </button>
               ))}
             </div>
@@ -909,9 +900,6 @@ function Index() {
             alt="Towering stacks of gold bars inside the impenetrable bank vault chamber with red lasers"
           />
           <div className="section-wrap" data-scroll-reveal>
-            <p className="mono-label eyebrow">
-              07 // RESTRICTED <span className="mh-stamp-box text-xs">ACCESS</span>
-            </p>
             <h2 className="display-title section-title">
               THE
               <br />
@@ -955,9 +943,6 @@ function Index() {
           <div className="section-wrap" data-scroll-reveal>
             <div className="section-head">
               <div>
-                <p className="mono-label eyebrow">
-                  08 // INTELLIGENCE <span className="mh-stamp-box text-xs">BRIEFING</span>
-                </p>
                 <h2 className="display-title section-title">
                   THE HEIST
                   <br />
@@ -971,7 +956,6 @@ function Index() {
             </div>
             <div className="info-grid">
               <div className="info-block">
-                <span className="mono-label text-gold">01 / THE OPERATION</span>
                 <h3>24 HOURS. ONE PLAN.</h3>
                 <p>
                   Teams compete in a continuous 24-hour sprint, responding to real-time challenges
@@ -979,15 +963,13 @@ function Index() {
                 </p>
               </div>
               <div className="info-block">
-                <span className="mono-label text-gold">02 / OPERATIONAL ZONES</span>
-                <h3>AI / ML & CYBERSECURITY.</h3>
+                <h3>AI, MACHINE LEARNING & CYBERSECURITY.</h3>
                 <p>
                   Two dedicated domains, with 16 crews per domain and four deep, industry-level
                   problem statements overall.
                 </p>
               </div>
               <div className="info-block">
-                <span className="mono-label text-gold">03 / THE HEIST CODE</span>
                 <h3>RULES: CLASSIFIED.</h3>
                 <p>
                   Detailed eligibility, jury metrics, hint auction dynamics, and code repositories
@@ -1010,7 +992,7 @@ function Index() {
                 "Jury Verdict",
               ].map((step, i) => (
                 <span className="flow-step mono-label" key={step}>
-                  {String(i + 1).padStart(2, "0")} / {step}
+                  {String(i + 1).padStart(2, "0")} · {step}
                 </span>
               ))}
             </div>
@@ -1024,9 +1006,6 @@ function Index() {
           <div className="section-wrap" data-scroll-reveal>
             <div className="section-head">
               <div>
-                <p className="mono-label eyebrow">
-                  09 // FREQUENT <span className="mh-stamp-box text-xs">TRANSMISSIONS</span>
-                </p>
                 <h2 className="display-title section-title">
                   INTELLIGENCE
                   <br />
@@ -1048,9 +1027,6 @@ function Index() {
             FINAL EXTRACTION & RECRUITMENT CALL
             ========================================================================= */}
         <section className="final-section" data-scroll-reveal>
-          <p className="mono-label text-gold">
-            <span className="status-pulse" /> FINAL TRANSMISSION // THE MYSTERY VAULT
-          </p>
           <h2 className="display-title">
             THE VAULT
             <br />
@@ -1083,7 +1059,7 @@ function Index() {
           </div>
           <p className="mono-label text-muted-foreground mt-10">
             {remaining === null
-              ? "DATES & OFFICIAL REGISTRATION // TO BE ANNOUNCED"
+              ? "DATES & OFFICIAL REGISTRATION: TO BE ANNOUNCED"
               : `THE HEIST BEGINS IN ${Math.floor(remaining / 86400000)}D ${Math.floor(remaining / 3600000) % 24}H ${Math.floor(remaining / 60000) % 60}M ${Math.floor(remaining / 1000) % 60}S`}
           </p>
         </section>
@@ -1121,13 +1097,12 @@ function Index() {
       </footer>
 
       {/* MODAL DIALOGS */}
-      {(dossier !== null || mission !== null || dialog) && (
+      {(mission !== null || dialog) && (
         <div
           className="modal-backdrop"
           role="presentation"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
-              setDossier(null);
               setMission(null);
               setDialog(null);
             }
@@ -1137,13 +1112,7 @@ function Index() {
             className="modal-panel"
             role="dialog"
             aria-modal="true"
-            aria-label={
-              dossier !== null
-                ? `${crew[dossier]!.name} dossier`
-                : mission !== null
-                  ? `${missions[mission]} file`
-                  : "System message"
-            }
+            aria-label={mission !== null ? `${missions[mission]} file` : "System message"}
           >
             <Button
               variant="heistGhost"
@@ -1151,7 +1120,6 @@ function Index() {
               className="modal-close"
               aria-label="Close dialog"
               onClick={() => {
-                setDossier(null);
                 setMission(null);
                 setDialog(null);
               }}
@@ -1159,42 +1127,17 @@ function Index() {
               <X />
             </Button>
 
-            {dossier !== null ? (
+            {mission !== null ? (
               <>
-                <p className="mono-label text-primary">
-                  CLASSIFIED PERSONNEL // DOSSIER {String(dossier + 1).padStart(2, "0")}
-                </p>
-                <h2>{crew[dossier]!.name}</h2>
-                <p className="mono-label text-gold">STATUS: ACTIVE OPERATIVE</p>
-                <div className="border-t mt-7 pt-6">
-                  <p className="mono-label text-muted-foreground">OPERATIONAL ROLE</p>
-                  <p className="font-display uppercase text-3xl text-foreground mt-2">
-                    {crew[dossier]!.role}
-                  </p>
-                  <p className="mono-label text-muted-foreground mt-8">SPECIALIZATION</p>
-                  <p className="font-display uppercase text-3xl text-foreground mt-2">
-                    {crew[dossier]!.specialty}
-                  </p>
-                </div>
-              </>
-            ) : mission !== null ? (
-              <>
-                <p className="mono-label text-primary">
-                  ENCRYPTED MISSION FILE // {String(mission + 1).padStart(2, "0")}
-                </p>
                 <h2>{missions[mission]}</h2>
                 <p className="mono-label text-gold">CLASSIFICATION: TOP SECRET</p>
                 <p className="mt-8">
                   This is a proposed mission category. The actual problem objective, injection
                   schedule, and evaluation metrics remain classified until official announcement.
                 </p>
-                <p className="mono-label mt-8 text-primary">
-                  DECRYPTION BLOCKED // AWAITING TIMED VAULT RELEASE
-                </p>
               </>
             ) : dialog === "identity" ? (
               <>
-                <p className="mono-label text-primary">IDENTITY PROTOCOL // VERIFIED</p>
                 <h2>YOU ARE PART OF THE CREW.</h2>
                 <p>
                   Identity confirmed. The Salvador Dalí mask is your symbol of resistance and
@@ -1213,7 +1156,6 @@ function Index() {
               </>
             ) : (
               <>
-                <p className="mono-label text-primary">RECRUITMENT CHANNEL // STANDBY</p>
                 <h2>THE CREW IS FORMING.</h2>
                 <p>
                   Official registration dates, venue coordinates, and registration links will be

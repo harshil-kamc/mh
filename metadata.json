@@ -1,6 +1,8 @@
 {
-  "name": "The Mystery Vault | Tech Heist Hackathon",
-  "description": "The Mystery Vault: A 24-hour Money Heist-inspired technology heist competition. 32 crews, AI/ML & Cybersecurity operations, live hint auctions, and vault extraction.",
+  "name": "Remix The Mystery Vault | Tech Heist Hackathon",
+    "description": "The Mystery Vault: A 24-hour Money Heist-inspired technology heist competition. 32 crews, AI, Machine Learning & Cybersecurity operations, live hint auctions, and vault extraction.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

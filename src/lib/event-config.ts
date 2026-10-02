@@ -5,7 +5,7 @@ export const eventConfig = {
   contactEmail: null as string | null,
   teamCount: 32,
   durationHours: 24,
-  domains: ["AI / ML", "Cybersecurity"],
+  domains: ["AI and Machine Learning", "Cybersecurity"],
   missionPoints: 5000,
   problemStatements: 4,
   socialLinks: { instagram: null, linkedin: null, discord: null, whatsapp: null } as Record<
@@ -38,7 +38,7 @@ export const phases: EventPhase[] = [
     location: "Bank Perimeter & Strategy Room",
     timeframe: "Hours 00:00 — 03:00",
     detail:
-      "Thirty-two crews assemble at the perimeter. The Professor transmits the classified problem statements. Teams analyze system vulnerabilities, lock in their domain (AI/ML or Cybersecurity), assemble crew roles, and blueprint their complete technical architecture before writing code.",
+      "Thirty-two crews assemble at the perimeter. The Professor transmits the classified problem statements. Teams analyze system vulnerabilities, lock in their domain (AI and Machine Learning or Cybersecurity), assemble crew roles, and blueprint their complete technical architecture before writing code.",
     steps: [
       "Problem Statement Lock: Analyze the enterprise problem statements and commit your crew to one target.",
       "Role Distribution: Assign tactical roles across the team (Lead Strategist, ML Specialist, Security Architect, Systems Engineer).",
@@ -63,7 +63,7 @@ export const phases: EventPhase[] = [
     detail:
       "Each crew receives their official vault tokens and 5,000 Mission Points (MP). This token stash is your currency to buy clues, intelligence hints, and bypass codes when facing difficult roadblocks during the mission.",
     steps: [
-      "Token Stash Collection: Collect your initial allotment of 5,000 Mission Tokens / Points (MP).",
+      "Token Stash Collection: Collect your initial allotment of 5,000 Mission Tokens and Points (MP).",
       "Resource Budgeting: Strategically plan how many tokens to save for critical bottlenecks vs bonus evaluation score.",
       "Intelligence Clearance: Initialize your token wallet to prepare for upcoming clue drops.",
     ],
@@ -93,7 +93,7 @@ export const phases: EventPhase[] = [
     deliverables: [
       "Functional mission codebase",
       "Stress-test benchmark logs",
-      "Working API / pipeline prototype",
+      "Working API and pipeline prototype",
     ],
     tacticalNote:
       "Build modularly. When the system mission changes mid-heist, rigid code breaks under pressure.",
@@ -146,17 +146,57 @@ export const phases: EventPhase[] = [
   },
 ];
 
-export const crew = [
-  { name: "The Professor", role: "Master strategist", specialty: "Planning / analysis / strategy" },
-  { name: "Tokyo", role: "Field operative", specialty: "Instinct / momentum / initiative" },
-  { name: "Berlin", role: "Operations lead", specialty: "Leadership / precision / control" },
-  { name: "Nairobi", role: "Production chief", specialty: "Execution / morale / resilience" },
-  { name: "Denver", role: "Problem solver", specialty: "Adaptability / action / resolve" },
-  { name: "Rio", role: "Systems hacker", specialty: "Technology / intelligence / access" },
-  { name: "Helsinki", role: "Security specialist", specialty: "Protection / endurance / trust" },
-  { name: "Palermo", role: "Tactical architect", specialty: "Engineering / planning / disruption" },
-  { name: "Lisbon", role: "Mission commander", specialty: "Coordination / judgment / negotiation" },
+export interface TeamRole {
+  number: string;
+  name: string;
+  badge: string;
+  role: string;
+  specialty: string;
+  description: string;
+}
+
+export const teamRoles: TeamRole[] = [
+  {
+    number: "01",
+    name: "Team Leader (The Professor)",
+    badge: "MISSION COMMANDER",
+    role: "Master Strategist & Team Leader",
+    specialty: "High-level architecture, hint bidding strategy, and mission orchestration",
+    description:
+      "Just like The Professor in Money Heist, every crew needs a master strategist who guides the team, allocates mission points in hint auctions, keeps the timeline synchronized, and directs the final extraction.",
+  },
+  {
+    number: "02",
+    name: "AI & Machine Learning Specialist",
+    badge: "INTELLIGENCE OPERATIVE",
+    role: "Core AI & Data Modeler",
+    specialty: "Model fine-tuning, retrieval pipelines, inference latency, and AI evaluation",
+    description:
+      "Leads algorithmic problem solving, prompt architectures, predictive systems, and neural network pipelines to solve complex domain challenges.",
+  },
+  {
+    number: "03",
+    name: "Cybersecurity & Defense Architect",
+    badge: "DEFENSE OPERATIVE",
+    role: "Security & Countermeasures Lead",
+    specialty:
+      "Vulnerability analysis, secure key exchange, threat containment, and system hardening",
+    description:
+      "Defends the crew's codebase against surprise security injections, protects mission tokens, verifies authentication barriers, and hardens the architecture.",
+  },
+  {
+    number: "04",
+    name: "Full-Stack & Systems Engineer",
+    badge: "INFILTRATION OPERATIVE",
+    role: "Infrastructure & Interface Builder",
+    specialty: "Full-stack integration, microservices, database schemas, and deployment pipelines",
+    description:
+      "Constructs the front-facing user experience, endpoints, database persistence, and automated extraction packaging for judge evaluation.",
+  },
 ];
+
+// Backward-compatible alias for existing imports
+export const crew = teamRoles;
 
 export const missions = [
   "Ideation",

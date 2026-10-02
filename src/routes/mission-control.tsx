@@ -49,12 +49,12 @@ function MissionControl() {
             <ArrowLeft size={15} /> BACK TO THE VAULT
           </Link>
           <span className="mono-label text-primary">
-            <span className="status-pulse" /> SIMULATION // NO LIVE EVENT DATA
+            <span className="status-pulse" /> SIMULATION · NO LIVE EVENT DATA
           </span>
         </div>
         <div className="section-head mt-14">
           <div>
-            <p className="mono-label eyebrow">RESTRICTED AREA / PROTOTYPE</p>
+            <p className="mono-label eyebrow">RESTRICTED AREA · PROTOTYPE</p>
             <h1 className="display-title section-title">
               MISSION
               <br />
@@ -69,7 +69,7 @@ function MissionControl() {
         <div className="control-grid">
           <div className="control-main">
             <p className="mono-label text-gold">
-              <ShieldCheck size={15} className="inline mr-2" /> LIVE EVENT STATUS / DEMO
+              <ShieldCheck size={15} className="inline mr-2" /> LIVE EVENT STATUS · DEMO
             </p>
             <h2 className="font-display font-extrabold uppercase text-5xl mt-8">SECURITY BREACH</h2>
             <div className="control-metrics">
@@ -84,12 +84,12 @@ function MissionControl() {
                 <strong>32</strong>
               </div>
               <div className="control-metric">
-                <span className="mono-label text-muted-foreground">ACTIVE / DEMO</span>
+                <span className="mono-label text-muted-foreground">ACTIVE DEMO</span>
                 <strong>31</strong>
               </div>
             </div>
             <p className="mono-label text-muted-foreground mt-8">
-              AUCTION: <span className="text-gold">{auctionOpen ? "OPEN" : "CLOSED"}</span> &nbsp; /
+              AUCTION: <span className="text-gold">{auctionOpen ? "OPEN" : "CLOSED"}</span> &nbsp; ·
               &nbsp; HINT: <span className="text-gold">{hintReleased ? "RELEASED" : "LOCKED"}</span>
             </p>
           </div>

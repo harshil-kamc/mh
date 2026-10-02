@@ -1374,6 +1374,22 @@ body::after {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
+.bank-cinema-wrap:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  border: none !important;
+  background: #070506 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.bank-cinema-wrap:fullscreen .bank-cinema-canvas-container {
+  flex: 1 1 auto !important;
+  height: calc(100vh - 54px) !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+
 .in-model-headings-bar {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

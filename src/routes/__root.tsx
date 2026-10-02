@@ -78,18 +78,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "The Mystery Vault" },
+      { title: "Remix The Mystery Vault | Tech Heist Hackathon" },
       {
         name: "description",
-        content: "A 24-hour technology heist for daring teams in AI/ML and cybersecurity.",
+        content:
+          "The Mystery Vault: A 24-hour Money Heist-inspired technology heist competition. 32 crews, AI, Machine Learning & Cybersecurity operations, live hint auctions, and vault extraction.",
       },
-      { property: "og:title", content: "The Mystery Vault" },
+      { property: "og:title", content: "Remix The Mystery Vault | Tech Heist Hackathon" },
       {
         property: "og:description",
-        content: "A 24-hour technology heist for daring teams in AI/ML and cybersecurity.",
+        content:
+          "The Mystery Vault: A 24-hour Money Heist-inspired technology heist competition. 32 crews, AI, Machine Learning & Cybersecurity operations, live hint auctions, and vault extraction.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://missionathon.vercel.app/favicon.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
