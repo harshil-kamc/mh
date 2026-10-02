@@ -19,6 +19,7 @@ import {
   ShieldAlert,
   Flame,
   Award,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { eventConfig, phases, teamRoles, missions } from "@/lib/event-config";
@@ -1093,6 +1094,22 @@ function Index() {
           MISSIONATHON © 2026
           <br />
           THIS SYSTEM IS ACTIVELY MONITORED.
+        </div>
+
+        {/* STYLISH SIGNATURE BADGE */}
+        <div className="w-full col-span-full mt-10 pt-8 border-t border-primary/25 flex flex-col items-center justify-center">
+          <div className="inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-neutral-950/95 border border-gold/40 shadow-[0_0_30px_rgba(225,38,32,0.25)] backdrop-blur-md">
+            <span className="font-display tracking-[0.2em] text-base sm:text-xl uppercase text-neutral-300">
+              Made with
+            </span>
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse drop-shadow-[0_0_10px_rgba(225,38,32,0.9)]" />
+            <span className="font-display tracking-[0.2em] text-base sm:text-xl uppercase text-neutral-300">
+              by
+            </span>
+            <span className="font-display font-extrabold tracking-[0.25em] text-lg sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-gold via-white to-gold drop-shadow-[0_0_12px_rgba(212,160,23,0.6)]">
+              HARSHIL
+            </span>
+          </div>
         </div>
       </footer>
 
