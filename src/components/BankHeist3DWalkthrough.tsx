@@ -205,39 +205,32 @@ export function BankHeist3DWalkthrough({
     const dy = e.clientY - dragStartRef.current.startY;
     if (Math.hypot(dx, dy) > 8) {
       hasMovedRef.current = true;
-    }
-
-    if (hasMovedRef.current) {
       const container = containerRef.current;
       const bounds = container ? container.getBoundingClientRect() : null;
-      const maxX = bounds ? bounds.width - 70 : 600;
-      const minX = 0;
-      const maxY = bounds ? bounds.height - 70 : 450;
-      const minY = 0;
+      const maxX = bounds ? Math.max(0, bounds.width - 70) : 600;
+      const maxY = bounds ? Math.max(0, bounds.height - 70) : 450;
 
-      const nextX = Math.max(minX, Math.min(dragStartRef.current.initX + dx, maxX));
-      const nextY = Math.max(minY, Math.min(dragStartRef.current.initY + dy, maxY));
+      const nextX = Math.max(0, Math.min(dragStartRef.current.initX + dx, maxX));
+      const nextY = Math.max(0, Math.min(dragStartRef.current.initY + dy, maxY));
 
       setDragPos({ x: nextX, y: nextY });
     }
   };
 
   const handlePointerUp = () => {
-    if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    if (!hasMovedRef.current) {
-      heistAudio.playClick();
-      setInfoOpen((prev) => !prev);
-    }
   };
 
-  // Click handler that works independently of drag gestures
+  // Click handler that works reliably and exclusively controls opening/closing
   const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (!hasMovedRef.current) {
-      heistAudio.playClick();
-      setInfoOpen((prev) => !prev);
+    if (hasMovedRef.current) {
+      hasMovedRef.current = false;
+      return;
     }
+    heistAudio.playClick();
+    setInfoOpen((prev) => !prev);
   };
 
   // Initialize Sketchfab Viewer API once to control smooth 3D camera transitions
@@ -510,45 +503,6 @@ export function BankHeist3DWalkthrough({
                     <X size={18} />
                   </button>
                 </div>
-              </div>
-
-              {/* All Phase Headings List (Click to jump and glide 3D camera) */}
-              <div className="p-2.5 bg-neutral-900/60 border-b border-border space-y-1 max-h-48 overflow-y-auto">
-                <div className="flex items-center justify-between px-1 pb-1">
-                  <p className="mono-label text-[9px] text-muted-foreground font-bold">
-                    ALL 5 HACKATHON PHASES (CLICK TO GLIDE 3D MODEL):
-                  </p>
-                  <span className="mono-label text-[9px] text-gold">
-                    ACTIVE: 0{currentPhase.number}
-                  </span>
-                </div>
-                {phases.map((p, idx) => {
-                  const isActive = currentPhaseIndex === idx;
-                  return (
-                    <button
-                      key={p.number}
-                      type="button"
-                      onClick={() => handleSelectPhase(idx)}
-                      className={`w-full text-left p-2 rounded transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                        isActive
-                          ? "bg-primary text-white font-bold shadow-md shadow-primary/30"
-                          : "bg-neutral-950/80 hover:bg-neutral-800 text-muted-foreground hover:text-foreground border border-border/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            isActive ? "bg-white text-primary" : "bg-neutral-800 text-gold"
-                          }`}
-                        >
-                          0{p.number}
-                        </span>
-                        <span className="font-display text-xs uppercase truncate">{p.title}</span>
-                      </div>
-                      <span className="mono-label text-[9px] shrink-0 opacity-80">{p.tag}</span>
-                    </button>
-                  );
-                })}
               </div>
 
               {/* Tab Navigation for Current Phase Info */}
