@@ -1,0 +1,1239 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState, lazy, Suspense } from "react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronRight,
+  ChevronLeft,
+  Menu,
+  X,
+  LockKeyhole,
+  Radio,
+  Shield,
+  CircleHelp,
+  Volume2,
+  VolumeX,
+  Music,
+  Eye,
+  ShieldCheck,
+  ShieldAlert,
+  Flame,
+  Award,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { eventConfig, phases, crew, missions } from "@/lib/event-config";
+import { heistAudio } from "@/lib/sound";
+import { DaliMaskHero } from "@/components/DaliMaskHero";
+import { BankHeist3DWalkthrough } from "@/components/BankHeist3DWalkthrough";
+
+// High-resolution local Money Heist wallpapers
+import heroImage from "@/assets/images/money_heist_hero_bg_1790930918948.jpg";
+import crewImage from "@/assets/images/money_heist_crew_action_1790930929592.jpg";
+import vaultGoldImage from "@/assets/images/money_heist_vault_gold_1790930941661.jpg";
+import maskImage from "@/assets/mask.jpg";
+
+// Client-only Three.js fallback / secondary scene
+const VaultScene = lazy(() =>
+  import("@/components/VaultScene").then((m) => ({ default: m.VaultScene })),
+);
+
+export const Route = createFileRoute("/")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "The Mystery Vault | Tech Heist Hackathon" },
+      {
+        name: "description",
+        content:
+          "The Mystery Vault: An immersive 24-hour Money Heist-inspired technology heist hackathon. 32 crews, AI/ML & Cybersecurity, hint auctions, and vault extraction.",
+      },
+      { property: "og:title", content: "The Mystery Vault | Tech Heist Hackathon" },
+      {
+        property: "og:description",
+        content: "A 24-hour technology heist. Recruit. Infiltrate. Breach. Extract. Escape.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Index,
+});
+
+const nav = [
+  ["Operation", "operation"],
+  ["3D Bank", "blueprint"],
+  ["Missions", "missions"],
+  ["Crew", "crew"],
+  ["The Mask", "mask"],
+  ["Control", "control"],
+  ["Vault", "vault"],
+  ["Rules", "rules"],
+  ["FAQ", "faq"],
+] as const;
+
+const scrollTo = (id: string) =>
+  document.getElementById(id)?.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+  });
+
+const faq = [
+  [
+    "What is The Mystery Vault?",
+    "A proposed 24-hour technology competition built around a high-stakes Money Heist narrative. 32 crews assemble, select problem statements, react to mid-heist missions, bid for intelligence, and extract their completed solutions.",
+  ],
+  [
+    "Which domains can crews compete in?",
+    "The proposed domains are AI/ML and Cybersecurity. There are four proposed problem statements in total; the actual briefs will be announced by the organizers.",
+  ],
+  [
+    "How does the Mission Point (MP) auction work?",
+    "Each team is allotted 5,000 Mission Points to strategically bid for hints and tactical intelligence during high-pressure missions. Auction rules and hint tiers are proposed, not final.",
+  ],
+  [
+    "How do I join a crew and register?",
+    "Registration is not open in this preview prototype. Dates, venue, eligibility, and the official registration link will be announced soon by the organizers.",
+  ],
+  [
+    "Are the missions already announced?",
+    "No. The mission archive currently shows proposed mission categories, not live briefs or finalized challenges. All briefs remain strictly encrypted.",
+  ],
+];
+
+function Index() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollPercent, setScrollPercent] = useState(0);
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [activePhase, setActivePhase] = useState(0);
+  const [dossier, setDossier] = useState<number | null>(null);
+  const [mission, setMission] = useState<number | null>(null);
+  const [dialog, setDialog] = useState<"registration" | "identity" | null>(null);
+  const [balance, setBalance] = useState(eventConfig.missionPoints);
+  const [bid, setBid] = useState("2000");
+  const [auctionResult, setAuctionResult] = useState("");
+  const [vaultResponse, setVaultResponse] = useState("SELECT AN OBJECT TO INSPECT THE VAULT.");
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Scroll listener for progress line and compact nav
+  useEffect(() => {
+    const onScroll = () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      if (total > 0) {
+        setScrollPercent(Math.min(100, Math.round((window.scrollY / total) * 100)));
+      }
+      setScrolled(window.scrollY > 45);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Scroll Reveal Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+    const elements = document.querySelectorAll("[data-scroll-reveal]");
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!eventConfig.date) return;
+    const update = () =>
+      setRemaining(Math.max(0, new Date(eventConfig.date as string).getTime() - Date.now()));
+    update();
+    const id = window.setInterval(update, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Close modals on Escape
+  useEffect(() => {
+    if (dossier === null && mission === null && !dialog) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDossier(null);
+        setMission(null);
+        setDialog(null);
+      }
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [dossier, mission, dialog]);
+
+  function handleAudioToggle() {
+    const muted = heistAudio.toggleMute();
+    setIsMuted(muted);
+  }
+
+  function handlePlayBellaCiao() {
+    if (isMuted) {
+      heistAudio.toggleMute();
+      setIsMuted(false);
+    }
+    heistAudio.playBellaCiaoMotif();
+  }
+
+  function enterVault() {
+    heistAudio.playVaultClank();
+    setVaultOpen(true);
+    window.setTimeout(() => scrollTo("vault"), 800);
+  }
+
+  function placeBid() {
+    const amount = Number(bid);
+    if (!Number.isInteger(amount) || amount < 500) {
+      setAuctionResult("MINIMUM DEMO BID: 500 MP.");
+      heistAudio.playClick();
+      return;
+    }
+    if (amount > balance) {
+      setAuctionResult("INSUFFICIENT MISSION POINTS.");
+      heistAudio.playClick();
+      return;
+    }
+    setBalance(balance - amount);
+    heistAudio.playAccessGranted();
+    const tier =
+      amount >= 2000
+        ? "TIER 3 (CRITICAL)"
+        : amount >= 1500
+          ? "TIER 2 (ADVANCED)"
+          : amount >= 1000
+            ? "TIER 1"
+            : "BASIC";
+    setAuctionResult(`ACCESS GRANTED — ${tier} INTELLIGENCE UNLOCKED. DEMO SIMULATION.`);
+  }
+
+  return (
+    <div className="site-shell">
+      {/* Scroll Progress Bar */}
+      <div className="scroll-progress-line" style={{ width: `${scrollPercent}%` }} />
+
+      {/* Top Danger Bar Strip */}
+      <div className="mh-danger-tape" />
+
+      {/* Navigation */}
+      <header className={`site-nav ${scrolled ? "compact" : ""}`}>
+        <a href="#top" className="brand" aria-label="The Mystery Vault home">
+          THE MYSTERY <b className="mh-stamp-box">VAULT.</b>
+        </a>
+        <nav className="nav-links desktop-links" aria-label="Primary navigation">
+          {nav.map(([label, id]) => (
+            <a
+              key={id}
+              className="nav-link mono-label hover:text-primary transition-colors"
+              href={`#${id}`}
+              onClick={() => heistAudio.playClick()}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          {/* Audio Synthesizer Controls */}
+          <button
+            type="button"
+            onClick={handlePlayBellaCiao}
+            className="hidden sm:inline-flex items-center gap-1.5 mono-label text-gold hover:text-foreground text-xs px-2.5 py-1.5 border border-gold/40 hover:border-gold transition-colors"
+            title="Play Bella Ciao theme snippet"
+          >
+            <Music size={13} className="text-primary animate-pulse" />
+            <span className="hidden md:inline">BELLA CIAO</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleAudioToggle}
+            className="inline-flex items-center gap-1.5 mono-label text-muted-foreground hover:text-foreground px-2.5 py-1.5 border border-border transition-colors"
+            title={isMuted ? "Enable sound effects" : "Mute audio"}
+          >
+            {isMuted ? (
+              <VolumeX size={15} />
+            ) : (
+              <Volume2 size={15} className="text-primary animate-pulse" />
+            )}
+            <span className="text-[10px] hidden sm:inline">
+              {isMuted ? "AUDIO OFF" : "AUDIO ON"}
+            </span>
+          </button>
+
+          <Button variant="heist" className="nav-action" onClick={enterVault}>
+            Enter the vault <ArrowUpRight />
+          </Button>
+
+          <Button
+            variant="heistGhost"
+            size="icon"
+            className="mobile-menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X /> : <Menu />}
+          </Button>
+        </div>
+
+        {menuOpen && (
+          <nav className="mobile-links" aria-label="Mobile navigation">
+            {nav.map(([label, id]) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                onClick={() => {
+                  setMenuOpen(false);
+                  heistAudio.playClick();
+                }}
+                className="nav-link mono-label"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        )}
+      </header>
+
+      <main>
+        {/* =========================================================================
+            HERO SECTION — 3D SALVADOR DALÍ MASK CENTERPIECE
+            Transparent embed viewer with NO borders, NO boxes, and NO background!
+            ========================================================================= */}
+        <section className="hero" id="top">
+          {/* Authentic Local Money Heist Vault Entrance Wallpaper */}
+          <img
+            className="hero-image"
+            src={heroImage}
+            width={1920}
+            height={1080}
+            alt="Atmospheric underground bank vault with crimson lighting and volumetric smoke"
+          />
+
+          {/* Clean 3D Salvador Dalí Mask in the Hero Landing Page */}
+          <DaliMaskHero />
+
+          <div className="hero-inner">
+            <p className="mono-label hero-kicker">
+              <span className="status-pulse" />
+              OPERATION: MV-01 <span className="text-muted-foreground">//</span> 24-HOUR TECH HEIST
+            </p>
+
+            <h1 className="display-title hero-title">
+              THE
+              <br />
+              MYSTERY
+              <span className="mh-stamp-box">VAULT.</span>
+            </h1>
+
+            <p className="hero-sub font-display tracking-wider text-primary">
+              THE NEXT HEIST BEGINS HERE.
+            </p>
+
+            <p className="hero-copy">
+              The system is secure. <strong className="text-foreground">Until you break it.</strong>{" "}
+              Thirty-two crews, two domains, high-stakes tactical missions, and live hint bidding.
+            </p>
+
+            <div className="hero-actions">
+              <Button variant="heist" onClick={enterVault}>
+                ENTER THE VAULT <ArrowUpRight />
+              </Button>
+              <Button
+                variant="heistOutline"
+                onClick={() => {
+                  heistAudio.playClick();
+                  scrollTo("operation");
+                }}
+              >
+                VIEW THE MISSION <ArrowRight />
+              </Button>
+              <Button
+                variant="heistGhost"
+                onClick={() => {
+                  heistAudio.playClick();
+                  setDialog("identity");
+                }}
+                className="text-gold border border-gold/30 hover:border-gold"
+              >
+                <ShieldCheck size={14} className="mr-1.5 text-primary" /> VERIFY MASK
+              </Button>
+            </div>
+          </div>
+
+          <p className="hero-side mono-label">
+            CLEARANCE: LEVEL RED · ENCRYPTION: ACTIVE · 40.4168°N 3.7038°W
+          </p>
+
+          <div className="hero-bottom">
+            <span className="mono-label">
+              <span className="status-pulse" /> SYSTEM STATUS:{" "}
+              <strong>OPERATIONAL // INFILTRATION READY</strong>
+            </span>
+            <button
+              className="mono-label flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => {
+                heistAudio.playClick();
+                scrollTo("operation");
+              }}
+            >
+              SCROLL TO DECRYPT <ArrowDown size={15} className="animate-bounce" />
+            </button>
+          </div>
+        </section>
+
+        {/* Laser security beam divider */}
+        <div className="mh-laser-beam" />
+
+        {/* STATS BAND */}
+        <div className="stat-band" aria-label="Proposed event facts" data-scroll-reveal>
+          {[
+            ["24", "HOURS BUILD"],
+            ["32", "ELITE CREWS"],
+            ["02", "DOMAINS (AI & CYBER)"],
+            ["04", "PROBLEMS"],
+            ["5K", "MISSION POINTS"],
+          ].map(([value, label]) => (
+            <div className="stat-item" key={label}>
+              <div className="stat-value">{value}</div>
+              <div className="mono-label stat-name">{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* =========================================================================
+            SECTION 01: THE OPERATION
+            ========================================================================= */}
+        <section className="story" id="operation">
+          <div className="section-wrap" data-scroll-reveal>
+            <p className="mono-label eyebrow">
+              01 // THE <span className="mh-stamp-box text-xs">OPERATION</span>
+            </p>
+            <div className="story-layout">
+              <h2 className="story-quote">
+                EVERY VAULT HAS A SECRET.
+                <br />
+                <em>EVERY CREW HAS A PLAN.</em>
+              </h2>
+              <div className="story-body">
+                <p>
+                  The world's most secure vault has one weakness.{" "}
+                  <strong className="text-primary text-xl">You.</strong>
+                </p>
+                <p>
+                  Thirty-two crews. Twenty-four hours. Unpredictable mid-heist missions. Limited
+                  resources. One final extraction.
+                </p>
+                <p>
+                  You are not here to simply register, code, and submit. You are here to infiltrate
+                  the problem, breach its architecture, bid on live hints, adapt when the alarms
+                  trigger, and escape with a solution powerful enough to survive.
+                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-8">
+                  <span className="mono-label text-gold border border-gold/30 px-3 py-1.5">
+                    AI / MACHINE LEARNING
+                  </span>
+                  <span className="mono-label text-primary border border-primary/30 px-3 py-1.5">
+                    CYBERSECURITY & DEFENSE
+                  </span>
+                  <span className="mono-label text-muted-foreground border border-border px-3 py-1.5">
+                    ONE EXTRACTION
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            3D UNION BANK WALKTHROUGH & HACKATHON BLUEPRINT
+            Interactive 3D model with 1, 2, 3, 4 sector zoom and synchronized hackathon process guide
+            ========================================================================= */}
+        <BankHeist3DWalkthrough activePhase={activePhase} onPhaseChange={setActivePhase} />
+
+        {/* =========================================================================
+            SECTION 02: OPERATIONAL BLUEPRINT (FIVE PHASES)
+            ========================================================================= */}
+        <section className="phase-section" id="missions">
+          <div className="section-wrap" data-scroll-reveal>
+            <div className="section-head">
+              <div>
+                <p className="mono-label eyebrow">
+                  02 // OPERATIONAL <span className="mh-stamp-box text-xs">BLUEPRINT</span>
+                </p>
+                <h2 className="display-title section-title">
+                  FIVE PHASES.
+                  <br />
+                  <span className="text-primary">ONE ESCAPE.</span>
+                </h2>
+              </div>
+              <p className="section-intro">
+                This isn't register, code, submit. Every step is a calculated move in an underground
+                heist. Select a phase to uncover the blueprint and sync the 3D model.
+              </p>
+            </div>
+            <div className="phase-layout">
+              <div className="phase-list">
+                {phases.map((phase, i) => (
+                  <button
+                    key={phase.number}
+                    className={`phase-button ${activePhase === i ? "active" : ""}`}
+                    onClick={() => {
+                      heistAudio.playClick();
+                      setActivePhase(i);
+                    }}
+                    aria-pressed={activePhase === i}
+                  >
+                    <span className="mono-label">{phase.number}</span>
+                    <strong>{phase.title}</strong>
+                    <ChevronRight size={18} />
+                  </button>
+                ))}
+              </div>
+              <div className="phase-detail" data-number={phases[activePhase]?.number || "01"}>
+                <span className="mono-label text-gold">
+                  // OPERATION PHASE {phases[activePhase]?.number || "01"} OF 05 ·{" "}
+                  {phases[activePhase]?.timeframe}
+                </span>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="mh-stamp-box text-[10px]">{phases[activePhase]?.tag}</span>
+                    <span className="mono-label text-xs text-primary">
+                      {phases[activePhase]?.location}
+                    </span>
+                  </div>
+                  <h3>{phases[activePhase]?.title}</h3>
+                  <p className="mono-label mt-3 text-gold text-xs">
+                    {phases[activePhase]?.subtitle}
+                  </p>
+                </div>
+                <p className="text-sm text-neutral-300 leading-relaxed">
+                  {phases[activePhase]?.detail}
+                </p>
+
+                {/* Tactical Phase Navigation: Seamlessly glides camera in the same 3D model */}
+                <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/60">
+                  <button
+                    type="button"
+                    disabled={activePhase === 0}
+                    onClick={() => {
+                      if (activePhase > 0) {
+                        heistAudio.playClick();
+                        setActivePhase(activePhase - 1);
+                      }
+                    }}
+                    className="mono-label text-xs px-3 py-2 border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors flex items-center gap-1.5"
+                    title="Glide to previous phase in 3D model"
+                  >
+                    <ChevronLeft size={14} /> PREV PHASE
+                  </button>
+                  <button
+                    type="button"
+                    disabled={activePhase === phases.length - 1}
+                    onClick={() => {
+                      if (activePhase < phases.length - 1) {
+                        heistAudio.playClick();
+                        setActivePhase(activePhase + 1);
+                      }
+                    }}
+                    className="mono-label text-xs px-4 py-2 bg-primary/20 border border-primary text-foreground hover:bg-primary/30 transition-colors flex items-center gap-1.5 font-bold"
+                    title="Glide to next phase in 3D model"
+                  >
+                    NEXT PHASE <ArrowRight size={14} className="text-primary" />
+                  </button>
+                  <span className="mono-label text-[10px] text-gold ml-auto hidden sm:inline">
+                    PHASE 0{activePhase + 1} OF 05 SYNCHRONIZED
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Laser security beam */}
+        <div className="mh-laser-beam" />
+
+        {/* =========================================================================
+            SECTION 03: CLASSIFIED PERSONNEL (THE HEIST CREW)
+            With authentic local squad wallpaper & classified dossiers
+            ========================================================================= */}
+        <section className="crew-section" id="crew">
+          <div className="section-wrap" data-scroll-reveal>
+            <div className="section-head">
+              <div>
+                <p className="mono-label eyebrow">
+                  03 // CLASSIFIED <span className="mh-stamp-box text-xs">PERSONNEL</span>
+                </p>
+                <h2 className="display-title section-title">
+                  MEET THE <span className="text-primary">CREW.</span>
+                </h2>
+              </div>
+              <p className="section-intro">
+                Every operation needs a strategist, an infiltrator, an engineer — and a crew that
+                refuses to surrender. Click on any operative to inspect their personnel dossier.
+              </p>
+            </div>
+
+            {/* Authentic Crew Lineup Wallpaper */}
+            <div className="crew-feature">
+              <img
+                src={crewImage}
+                loading="lazy"
+                width={1920}
+                height={1080}
+                alt="Money Heist crew in iconic red jumpsuits and Salvador Dalí masks"
+              />
+              <div className="crew-caption">
+                <p className="mono-label text-gold mb-3">
+                  <span className="status-pulse" /> CLASSIFIED DOSSIER FILE // 009 OPERATIVES
+                </p>
+                <h3>
+                  NO ONE
+                  <br />
+                  WORKS ALONE.
+                </h3>
+              </div>
+            </div>
+
+            {/* Crew Member Dossier Triggers */}
+            <div className="crew-names">
+              {crew.map((person, i) => (
+                <button
+                  className="crew-name"
+                  key={person.name}
+                  onClick={() => {
+                    heistAudio.playClick();
+                    setDossier(i);
+                  }}
+                >
+                  <span className="mono-label">{String(i + 1).padStart(2, "0")}</span>
+                  <strong>{person.name}</strong>
+                  <ArrowUpRight size={16} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION: THE MASKS & IDENTITY VERIFICATION
+            ========================================================================= */}
+        <section className="mask-banner" id="mask">
+          <img
+            className="mask-image"
+            src={maskImage}
+            loading="lazy"
+            width={1024}
+            height={1024}
+            alt="Salvador Dalí mask with arched eyebrows and upturned mustache"
+            onClick={() => {
+              heistAudio.playClick();
+              setDialog("identity");
+            }}
+          />
+          <div className="mask-copy" data-scroll-reveal>
+            <p className="mono-label text-black/80 font-mono">
+              <span className="status-pulse" /> IDENTITY PROTOCOL // ACTIVE
+            </p>
+            <h2 className="display-title mt-7 text-white">
+              THE
+              <br />
+              <span className="bg-black text-white px-2 py-0.5 inline-block">MASKS.</span>
+            </h2>
+            <p className="text-white/90">
+              Every crew has a face. Every face hides a plan. Don the mask, synchronize your
+              strategy, and prepare for the breach.
+            </p>
+            <div className="flex flex-wrap gap-3 mt-4">
+              <Button
+                variant="heist"
+                className="bg-black hover:bg-neutral-900 text-white border border-white/20"
+                onClick={() => {
+                  heistAudio.playAccessGranted();
+                  setDialog("identity");
+                }}
+              >
+                VERIFY IDENTITY <ArrowRight />
+              </Button>
+              <Button
+                variant="heistOutline"
+                className="border-white text-white hover:bg-white/10"
+                onClick={() => {
+                  heistAudio.playClick();
+                  scrollTo("top");
+                }}
+              >
+                INTERACT WITH 3D MASK <Eye size={14} className="ml-1" />
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 04: MISSION CONTROL & LIVE SYSTEM SIMULATION
+            ========================================================================= */}
+        <section className="control-section" id="control">
+          <div className="section-wrap" data-scroll-reveal>
+            <div className="section-head">
+              <div>
+                <p className="mono-label eyebrow">
+                  04 // LIVE SYSTEM <span className="mh-stamp-box text-xs">SIMULATION</span>
+                </p>
+                <h2 className="display-title section-title">
+                  MISSION
+                  <br />
+                  <span className="text-primary">CONTROL.</span>
+                </h2>
+              </div>
+              <p className="section-intro">
+                An advance look inside the Professor's operations center. Simulated telemetry, live
+                terminal logs, and encrypted communications.
+              </p>
+            </div>
+            <div className="control-grid">
+              <div className="control-main">
+                <div className="flex justify-between mono-label text-gold">
+                  <span>
+                    <span className="status-pulse" /> SYSTEM ONLINE
+                  </span>
+                  <span>COMMAND TELEMETRY // 001</span>
+                </div>
+                <h3>
+                  CURRENT OPERATION:
+                  <br />
+                  <span className="text-primary">SECURITY BREACH</span>
+                </h3>
+                <p className="mono-label text-muted-foreground">
+                  MISSION STATUS / SIMULATED PROGRESS
+                </p>
+                <div className="progress-track">
+                  <div className="progress-fill" />
+                </div>
+                <div className="control-metrics">
+                  <div className="control-metric">
+                    <span className="mono-label text-muted-foreground">STATUS</span>
+                    <strong>82%</strong>
+                  </div>
+                  <div className="control-metric">
+                    <span className="mono-label text-muted-foreground">CREWS ACTIVE</span>
+                    <strong>32</strong>
+                  </div>
+                  <div className="control-metric">
+                    <span className="mono-label text-muted-foreground">MP RESERVE</span>
+                    <strong>160K</strong>
+                  </div>
+                </div>
+              </div>
+              <div className="control-side">
+                <div className="mono-label text-primary">
+                  <Radio size={15} className="inline mr-2 animate-pulse" /> ENCRYPTED RADAR FEED
+                </div>
+                <div className="terminal">
+                  {[
+                    "SYSTEM INITIALIZED [PORT: 40.4168°N]",
+                    "32 CREWS RECRUITED AND VERIFIED",
+                    "VAULT SECURITY COUNTERMEASURES ONLINE",
+                    "MISSION AUCTION CHANNEL OPEN",
+                    "ENCRYPTION KEY ACTIVE // DALI-MV01",
+                    "AWAITING NEXT DIRECTIVE...",
+                  ].map((log, i) => (
+                    <div key={log}>
+                      <span className="text-muted-foreground">0{i + 1}: </span>&gt; {log}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-10 border-t pt-5">
+                  <p className="mono-label text-muted-foreground">ALERT BROADCAST</p>
+                  <p className="font-display text-2xl uppercase mt-3 text-primary">
+                    MISSION UNLOCK IMMINENT
+                  </p>
+                  <Link
+                    to="/mission-control"
+                    className="mono-label inline-flex items-center gap-2 text-gold mt-6 hover:text-foreground transition-colors"
+                  >
+                    OPEN MISSION CONTROL ROOM <ArrowUpRight size={15} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 05: MISSION POINTS & HINT AUCTION
+            ========================================================================= */}
+        <section id="points">
+          <div className="section-wrap auction-layout" data-scroll-reveal>
+            <div>
+              <p className="mono-label eyebrow">
+                05 // THE ECONOMY OF <span className="mh-stamp-box text-xs">INFORMATION</span>
+              </p>
+              <h2 className="display-title section-title">
+                MISSION
+                <br />
+                <span className="text-primary">POINTS.</span>
+              </h2>
+              <p className="section-intro mt-8">
+                Information has a price. Spend strategically. Buy intelligence. Protect your
+                advantage. Every team receives an initial allocation of 5,000 MP.
+              </p>
+              <p className="mono-label text-muted-foreground mt-12">YOUR DEMO BALANCE</p>
+              <div className="big-balance">
+                {balance.toLocaleString()}
+                <span className="text-3xl ml-2">MP</span>
+              </div>
+              <p className="mono-label text-gold">PROPOSED SYSTEM // SUBJECT TO OFFICIAL RULES</p>
+            </div>
+            <div className="auction-panel">
+              <div className="auction-header">
+                <p className="mono-label text-primary">
+                  <Flame size={14} className="inline mr-1" /> HINT AUCTION // SIMULATION
+                </p>
+                <h3 className="font-display font-bold text-4xl uppercase mt-5">
+                  UNKNOWN VARIABLE DETECTED
+                </h3>
+                <p className="mono-label text-muted-foreground mt-3">
+                  MISSION #04 &nbsp;·&nbsp; STRATEGIC BIDDING ACTIVE
+                </p>
+              </div>
+              <p className="mono-label text-muted-foreground mt-6">PROPOSED INTELLIGENCE TIERS</p>
+              <div className="tier-grid">
+                {(
+                  [
+                    ["500+", "BASIC"],
+                    ["1000+", "TIER 1"],
+                    ["1500+", "TIER 2"],
+                    ["2000+", "TIER 3"],
+                  ] as const
+                ).map(([amount, tier]) => (
+                  <button
+                    key={tier}
+                    className="tier"
+                    onClick={() => {
+                      heistAudio.playClick();
+                      setBid(amount.replace("+", ""));
+                    }}
+                  >
+                    {amount}
+                    <br />
+                    <span className="text-gold">{tier}</span>
+                  </button>
+                ))}
+              </div>
+              <label htmlFor="bid" className="mono-label text-muted-foreground">
+                YOUR BID / MISSION POINTS
+              </label>
+              <input
+                id="bid"
+                className="auction-amount"
+                type="number"
+                min="500"
+                max={balance}
+                step="100"
+                value={bid}
+                onChange={(e) => setBid(e.target.value)}
+              />
+              <Button variant="heist" className="w-full h-12" onClick={placeBid}>
+                PLACE DEMO BID <ArrowRight />
+              </Button>
+              <p className="mono-label text-gold min-h-9 mt-5" role="status">
+                {auctionResult || "SIMULATION ONLY — TEST THE AUCTION TIERS"}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 06: MISSION ARCHIVE
+            ========================================================================= */}
+        <section className="control-section" id="archive">
+          <div className="section-wrap" data-scroll-reveal>
+            <div className="section-head">
+              <div>
+                <p className="mono-label eyebrow">
+                  06 // ENCRYPTED <span className="mh-stamp-box text-xs">FILES</span>
+                </p>
+                <h2 className="display-title section-title">
+                  MISSION
+                  <br />
+                  <span className="text-primary">ARCHIVE.</span>
+                </h2>
+              </div>
+              <p className="section-intro">
+                Proposed mission categories. Objectives and release timing remain classified until
+                official deployment by the organizers.
+              </p>
+            </div>
+            <div className="archive-grid">
+              {missions.map((name, i) => (
+                <button
+                  className="archive-file"
+                  key={name}
+                  onClick={() => {
+                    heistAudio.playClick();
+                    setMission(i);
+                  }}
+                >
+                  <div className="flex justify-between mono-label text-muted-foreground">
+                    <span>FILE {String(i + 1).padStart(2, "0")}</span>
+                    <LockKeyhole size={14} className="text-primary" />
+                  </div>
+                  <h3>{name}</h3>
+                  <span className="mono-label text-primary">
+                    CLASSIFIED / VIEW FILE <ArrowUpRight size={13} className="inline ml-1" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 07: RESTRICTED ACCESS // THE VAULT CHAMBER
+            With authentic gold bullion & laser grid wallpaper
+            ========================================================================= */}
+        <section className="vault-section" id="vault">
+          <img
+            className="vault-section-image"
+            src={vaultGoldImage}
+            loading="lazy"
+            width={1920}
+            height={1080}
+            alt="Towering stacks of gold bars inside the impenetrable bank vault chamber with red lasers"
+          />
+          <div className="section-wrap" data-scroll-reveal>
+            <p className="mono-label eyebrow">
+              07 // RESTRICTED <span className="mh-stamp-box text-xs">ACCESS</span>
+            </p>
+            <h2 className="display-title section-title">
+              THE
+              <br />
+              <span className="text-primary">VAULT.</span>
+            </h2>
+            <p className="section-intro mt-7">
+              What's hidden inside? Explore the chamber. Every object tells a part of the heist
+              story.
+            </p>
+            <div className="vault-actions">
+              {(
+                [
+                  ["GOLD BAR", "VALUE EXTRACTED — YOUR COMPLETED SOLUTION IS THE REAL GOLD."],
+                  ["MISSION FILE", "MISSION DATA CLASSIFIED — BRIEFINGS UNLOCK DURING THE BUILD."],
+                  ["TERMINAL", "SECURITY CLEARANCE VERIFIED — ENCRYPTION ACTIVE."],
+                  ["CENTRAL CORE", "FINAL EXTRACTION PROTOCOL READY FOR ESCAPE."],
+                ] as const
+              ).map(([label, response]) => (
+                <Button
+                  key={label}
+                  variant="heistOutline"
+                  onClick={() => {
+                    heistAudio.playVaultClank();
+                    setVaultResponse(response);
+                  }}
+                >
+                  {label} <ArrowUpRight />
+                </Button>
+              ))}
+            </div>
+            <p className="vault-response mono-label" role="status">
+              {vaultResponse}
+            </p>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 08: THE HEIST CODE (RULES & FLOW)
+            ========================================================================= */}
+        <section className="info-section" id="rules">
+          <div className="section-wrap" data-scroll-reveal>
+            <div className="section-head">
+              <div>
+                <p className="mono-label eyebrow">
+                  08 // INTELLIGENCE <span className="mh-stamp-box text-xs">BRIEFING</span>
+                </p>
+                <h2 className="display-title section-title">
+                  THE HEIST
+                  <br />
+                  <span className="text-primary">CODE.</span>
+                </h2>
+              </div>
+              <p className="section-intro">
+                Everything you need to know about the proposed operation. Final rules, detailed
+                schedules, and venue will be officially published.
+              </p>
+            </div>
+            <div className="info-grid">
+              <div className="info-block">
+                <span className="mono-label text-gold">01 / THE OPERATION</span>
+                <h3>24 HOURS. ONE PLAN.</h3>
+                <p>
+                  Teams compete in a continuous 24-hour sprint, responding to real-time challenges
+                  and refining their system under high pressure.
+                </p>
+              </div>
+              <div className="info-block">
+                <span className="mono-label text-gold">02 / OPERATIONAL ZONES</span>
+                <h3>AI / ML & CYBERSECURITY.</h3>
+                <p>
+                  Two dedicated domains, with 16 crews per domain and four deep, industry-level
+                  problem statements overall.
+                </p>
+              </div>
+              <div className="info-block">
+                <span className="mono-label text-gold">03 / THE HEIST CODE</span>
+                <h3>RULES: CLASSIFIED.</h3>
+                <p>
+                  Detailed eligibility, jury metrics, hint auction dynamics, and code repositories
+                  are finalized in the official rulebook.
+                </p>
+              </div>
+            </div>
+
+            <p className="mono-label text-muted-foreground mt-16">PROPOSED OPERATION FLOW</p>
+            <div className="flow-line">
+              {[
+                "Recruitment",
+                "Problem Selection",
+                "Infiltration",
+                "Continuous Build",
+                "Mission Unlocks",
+                "Hint Auctions",
+                "Adapt & Harden",
+                "Final Extraction",
+                "Jury Verdict",
+              ].map((step, i) => (
+                <span className="flow-step mono-label" key={step}>
+                  {String(i + 1).padStart(2, "0")} / {step}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 09: FREQUENT TRANSMISSIONS (FAQ)
+            ========================================================================= */}
+        <section id="faq">
+          <div className="section-wrap" data-scroll-reveal>
+            <div className="section-head">
+              <div>
+                <p className="mono-label eyebrow">
+                  09 // FREQUENT <span className="mh-stamp-box text-xs">TRANSMISSIONS</span>
+                </p>
+                <h2 className="display-title section-title">
+                  INTELLIGENCE
+                  <br />
+                  <span className="text-primary">BRIEFING.</span>
+                </h2>
+              </div>
+              <CircleHelp className="text-gold" size={34} />
+            </div>
+            {faq.map(([question, answer]) => (
+              <details className="faq-row" key={question}>
+                <summary onClick={() => heistAudio.playClick()}>{question}</summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* =========================================================================
+            FINAL EXTRACTION & RECRUITMENT CALL
+            ========================================================================= */}
+        <section className="final-section" data-scroll-reveal>
+          <p className="mono-label text-gold">
+            <span className="status-pulse" /> FINAL TRANSMISSION // THE MYSTERY VAULT
+          </p>
+          <h2 className="display-title">
+            THE VAULT
+            <br />
+            WILL <span className="mh-stamp-box">OPEN.</span>
+          </h2>
+          <p className="font-display uppercase text-3xl mb-9 tracking-wider">
+            WHAT WILL YOU TAKE OUT?
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button
+              variant="heist"
+              className="h-12 px-8 text-sm"
+              onClick={() => {
+                heistAudio.playAccessGranted();
+                setDialog("registration");
+              }}
+            >
+              JOIN THE HEIST <ArrowUpRight />
+            </Button>
+            <Button
+              variant="heistOutline"
+              className="h-12 px-8 text-sm"
+              onClick={() => {
+                heistAudio.playClick();
+                scrollTo("rules");
+              }}
+            >
+              VIEW EVENT CODE <ArrowRight />
+            </Button>
+          </div>
+          <p className="mono-label text-muted-foreground mt-10">
+            {remaining === null
+              ? "DATES & OFFICIAL REGISTRATION // TO BE ANNOUNCED"
+              : `THE HEIST BEGINS IN ${Math.floor(remaining / 86400000)}D ${Math.floor(remaining / 3600000) % 24}H ${Math.floor(remaining / 60000) % 60}M ${Math.floor(remaining / 1000) % 60}S`}
+          </p>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div>
+          <div className="brand text-3xl">
+            THE MYSTERY <b className="mh-stamp-box">VAULT.</b>
+          </div>
+          <p className="mono-label mt-5 text-gold">PLAN. INFILTRATE. ADAPT. EXTRACT.</p>
+        </div>
+        <div className="flex flex-wrap gap-5 mono-label">
+          {nav.map(([label, id]) => (
+            <a key={id} href={`#${id}`} onClick={() => heistAudio.playClick()}>
+              {label}
+            </a>
+          ))}
+          <button
+            className="mono-label hover:text-foreground transition-colors"
+            onClick={() => {
+              heistAudio.playClick();
+              setDialog("registration");
+            }}
+          >
+            CONTACT
+          </button>
+        </div>
+        <div className="mono-label">
+          MISSIONATHON © 2026
+          <br />
+          THIS SYSTEM IS ACTIVELY MONITORED.
+        </div>
+      </footer>
+
+      {/* MODAL DIALOGS */}
+      {(dossier !== null || mission !== null || dialog) && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setDossier(null);
+              setMission(null);
+              setDialog(null);
+            }
+          }}
+        >
+          <div
+            className="modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={
+              dossier !== null
+                ? `${crew[dossier]!.name} dossier`
+                : mission !== null
+                  ? `${missions[mission]} file`
+                  : "System message"
+            }
+          >
+            <Button
+              variant="heistGhost"
+              size="icon"
+              className="modal-close"
+              aria-label="Close dialog"
+              onClick={() => {
+                setDossier(null);
+                setMission(null);
+                setDialog(null);
+              }}
+            >
+              <X />
+            </Button>
+
+            {dossier !== null ? (
+              <>
+                <p className="mono-label text-primary">
+                  CLASSIFIED PERSONNEL // DOSSIER {String(dossier + 1).padStart(2, "0")}
+                </p>
+                <h2>{crew[dossier]!.name}</h2>
+                <p className="mono-label text-gold">STATUS: ACTIVE OPERATIVE</p>
+                <div className="border-t mt-7 pt-6">
+                  <p className="mono-label text-muted-foreground">OPERATIONAL ROLE</p>
+                  <p className="font-display uppercase text-3xl text-foreground mt-2">
+                    {crew[dossier]!.role}
+                  </p>
+                  <p className="mono-label text-muted-foreground mt-8">SPECIALIZATION</p>
+                  <p className="font-display uppercase text-3xl text-foreground mt-2">
+                    {crew[dossier]!.specialty}
+                  </p>
+                </div>
+              </>
+            ) : mission !== null ? (
+              <>
+                <p className="mono-label text-primary">
+                  ENCRYPTED MISSION FILE // {String(mission + 1).padStart(2, "0")}
+                </p>
+                <h2>{missions[mission]}</h2>
+                <p className="mono-label text-gold">CLASSIFICATION: TOP SECRET</p>
+                <p className="mt-8">
+                  This is a proposed mission category. The actual problem objective, injection
+                  schedule, and evaluation metrics remain classified until official announcement.
+                </p>
+                <p className="mono-label mt-8 text-primary">
+                  DECRYPTION BLOCKED // AWAITING TIMED VAULT RELEASE
+                </p>
+              </>
+            ) : dialog === "identity" ? (
+              <>
+                <p className="mono-label text-primary">IDENTITY PROTOCOL // VERIFIED</p>
+                <h2>YOU ARE PART OF THE CREW.</h2>
+                <p>
+                  Identity confirmed. The Salvador Dalí mask is your symbol of resistance and
+                  precision. Keep your strategy confidential.
+                </p>
+                <Button
+                  variant="heist"
+                  className="mt-8"
+                  onClick={() => {
+                    heistAudio.playAccessGranted();
+                    setDialog(null);
+                  }}
+                >
+                  CONTINUE OPERATION <ArrowRight />
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="mono-label text-primary">RECRUITMENT CHANNEL // STANDBY</p>
+                <h2>THE CREW IS FORMING.</h2>
+                <p>
+                  Official registration dates, venue coordinates, and registration links will be
+                  released by the organizers shortly. Prepare your squad.
+                </p>
+                <Button
+                  variant="heist"
+                  className="mt-8"
+                  onClick={() => {
+                    heistAudio.playClick();
+                    setDialog(null);
+                  }}
+                >
+                  ACKNOWLEDGE <ArrowRight />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
