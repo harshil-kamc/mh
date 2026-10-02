@@ -89,7 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "A 24-hour technology heist for daring teams in AI/ML and cybersecurity.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://missionathon.vercel.app/favicon.ico" },
+      { property: "og:image", content: "https://missionathon.vercel.app/favicon.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
