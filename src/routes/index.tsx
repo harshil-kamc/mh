@@ -115,10 +115,14 @@ function Index() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Play background song at 70% volume on site load
+  // Play background song at 70% volume on site load and keep state synced
   useEffect(() => {
     heistAudio.initBackgroundMusic();
     setIsMuted(heistAudio.isMuted);
+    const unsubscribe = heistAudio.subscribe((muted) => {
+      setIsMuted(muted);
+    });
+    return unsubscribe;
   }, []);
 
   // Scroll listener for progress line and compact nav
@@ -1166,15 +1170,15 @@ function Index() {
             </div>
           </div>
         </div>
-{/* STYLISH SIGNATURE BADGE */}
-<div className="w-full col-span-full mt-6 pt-6 border-t border-primary/20 flex items-center justify-center">
-  <p className="font-display tracking-[0.2em] text-sm sm:text-base uppercase text-neutral-400">
-    Developed by{" "}
-    <span className="mh-signature font-semibold text-neutral-200 transition-all duration-300 cursor-default hover:text-primary hover:[text-shadow:0_0_8px_rgba(225,38,32,0.9),0_0_20px_rgba(225,38,32,0.6),0_0_40px_rgba(225,38,32,0.35)]">
-      Harshil
-    </span>
-  </p>
-</div>
+        {/* STYLISH SIGNATURE BADGE */}
+        <div className="w-full col-span-full mt-6 pt-6 border-t border-primary/20 flex items-center justify-center">
+          <p className="font-display tracking-[0.2em] text-sm sm:text-base uppercase text-neutral-400">
+            Developed by{" "}
+            <span className="mh-signature font-semibold text-neutral-200 transition-all duration-300 cursor-default hover:text-primary hover:[text-shadow:0_0_8px_rgba(225,38,32,0.9),0_0_20px_rgba(225,38,32,0.6),0_0_40px_rgba(225,38,32,0.35)]">
+              Harshil
+            </span>
+          </p>
+        </div>
       </footer>
 
       {/* MODAL DIALOGS */}
