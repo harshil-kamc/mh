@@ -301,9 +301,6 @@ function Index() {
             alt="Atmospheric underground bank vault with crimson lighting and volumetric smoke"
           />
 
-          {/* Clean 3D Salvador Dalí Mask in the Hero Landing Page */}
-          <DaliMaskHero />
-
           <div className="hero-inner">
             <h1 className="display-title hero-title">
               THE
@@ -312,14 +309,22 @@ function Index() {
               <span className="mh-stamp-box">VAULT.</span>
             </h1>
 
-            <p className="hero-sub font-display tracking-wider text-primary">
-              THE NEXT HEIST BEGINS HERE.
-            </p>
+            {/* Middle row: on mobile, 3D Dali mask sits on the left side of text; on desktop, it sits absolute on the right */}
+            <div className="hero-mid-row">
+              <DaliMaskHero />
 
-            <p className="hero-copy">
-              The system is secure. <strong className="text-foreground">Until you break it.</strong>{" "}
-              Thirty-two crews, two domains, high-stakes tactical missions, and live hint bidding.
-            </p>
+              <div className="hero-copy-wrap">
+                <p className="hero-sub font-display tracking-wider text-primary">
+                  THE NEXT HEIST BEGINS HERE.
+                </p>
+
+                <p className="hero-copy">
+                  The system is secure.{" "}
+                  <strong className="text-foreground">Until you break it.</strong> Thirty-two crews,
+                  two domains, high-stakes tactical missions, and live hint bidding.
+                </p>
+              </div>
+            </div>
 
             <div className="hero-actions">
               <Button variant="heist" onClick={enterVault}>
@@ -1096,21 +1101,80 @@ function Index() {
           THIS SYSTEM IS ACTIVELY MONITORED.
         </div>
 
-        {/* STYLISH SIGNATURE BADGE */}
-        <div className="w-full col-span-full mt-10 pt-8 border-t border-primary/25 flex flex-col items-center justify-center">
-          <div className="inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-neutral-950/95 border border-gold/40 shadow-[0_0_30px_rgba(225,38,32,0.25)] backdrop-blur-md">
-            <span className="font-display tracking-[0.2em] text-base sm:text-xl uppercase text-neutral-300">
-              Made with
-            </span>
-            <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse drop-shadow-[0_0_10px_rgba(225,38,32,0.9)]" />
-            <span className="font-display tracking-[0.2em] text-base sm:text-xl uppercase text-neutral-300">
-              by
-            </span>
-            <span className="font-display font-extrabold tracking-[0.25em] text-lg sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-gold via-white to-gold drop-shadow-[0_0_12px_rgba(212,160,23,0.6)]">
-              HARSHIL
-            </span>
+        {/* CREDITS & ACKNOWLEDGMENTS */}
+        <div className="w-full col-span-full mt-10 pt-8 border-t border-border/80">
+          <p className="mono-label text-xs text-gold font-bold mb-4 tracking-wider">
+            CREDITS & ACKNOWLEDGMENTS
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-neutral-400 leading-relaxed">
+            {/* 3D Models Authors */}
+            <div className="p-3.5 rounded bg-neutral-950/70 border border-border/70">
+              <p className="mono-label text-[10px] text-primary font-bold mb-2 uppercase">
+                3D Models (Sketchfab)
+              </p>
+              <ul className="space-y-1.5">
+                <li>
+                  <strong className="text-foreground">Salvador Dalí Mask</strong> by{" "}
+                  <a
+                    href="https://sketchfab.com/3d-models/salvador-dali-mask-money-heist-363930600ee5400dbf4ea85284ca9a23"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gold hover:underline"
+                  >
+                    h3ydari96 (Nima)
+                  </a>
+                </li>
+                <li>
+                  <strong className="text-foreground">MC Union Bank Vault</strong> by{" "}
+                  <a
+                    href="https://sketchfab.com/3d-models/heist-mc-union-bank-10a21127e14d43adaf37f150fb3cafca"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gold hover:underline"
+                  >
+                    santirodero7 (SoftGrooveDesign)
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Original Soundtrack */}
+            <div className="p-3.5 rounded bg-neutral-950/70 border border-border/70">
+              <p className="mono-label text-[10px] text-primary font-bold mb-2 uppercase">
+                Original Theme Song
+              </p>
+              <p className="text-foreground font-semibold mb-1">"My Life Is Going On"</p>
+              <p>
+                Music composed by <strong className="text-foreground">Manel Santisteban</strong>
+                <br />
+                Lyrics & vocals by <strong className="text-foreground">Cecilia Krull</strong>
+              </p>
+            </div>
+
+            {/* Netflix & Creators */}
+            <div className="p-3.5 rounded bg-neutral-950/70 border border-border/70">
+              <p className="mono-label text-[10px] text-primary font-bold mb-2 uppercase">
+                Franchise & Production
+              </p>
+              <p className="text-foreground font-semibold mb-1">Money Heist (La Casa de Papel)</p>
+              <p>
+                Created by <strong className="text-foreground">Álex Pina</strong>
+                <br />
+                Vancouver Media · Atresmedia ·{" "}
+                <strong className="text-primary font-bold">Netflix</strong>
+              </p>
+            </div>
           </div>
         </div>
+{/* STYLISH SIGNATURE BADGE */}
+<div className="w-full col-span-full mt-6 pt-6 border-t border-primary/20 flex items-center justify-center">
+  <p className="font-display tracking-[0.2em] text-sm sm:text-base uppercase text-neutral-400">
+    Developed by{" "}
+    <span className="mh-signature font-semibold text-neutral-200 transition-all duration-300 cursor-default hover:text-primary hover:[text-shadow:0_0_8px_rgba(225,38,32,0.9),0_0_20px_rgba(225,38,32,0.6),0_0_40px_rgba(225,38,32,0.35)]">
+      Harshil
+    </span>
+  </p>
+</div>
       </footer>
 
       {/* MODAL DIALOGS */}

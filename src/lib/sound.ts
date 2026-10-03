@@ -53,24 +53,36 @@ class HeistAudio {
             this.isMuted = false;
           })
           .catch(() => {
-            // Browser autoplay restrictions: start playing upon first user interaction
-            const startOnInteraction = () => {
+            // Mobile browser autoplay restrictions: unlock and start on the very first touch/click
+            const unlockAndPlay = () => {
+              if (this.ctx && this.ctx.state === "suspended") {
+                this.ctx.resume().catch(() => {});
+              }
               if (this.bgMusic && !this.isMuted) {
                 this.bgMusic.volume = 0.7;
-                this.bgMusic.play().catch(() => {});
+                const p = this.bgMusic.play();
+                if (p !== undefined) {
+                  p.then(() => {
+                    // Audio unlocked and playing! Remove listeners now.
+                    removeInteractionListeners();
+                  }).catch(() => {
+                    // Still waiting for qualifying user gesture; keep listeners active
+                  });
+                }
               }
-              window.removeEventListener("click", startOnInteraction);
-              window.removeEventListener("keydown", startOnInteraction);
-              window.removeEventListener("scroll", startOnInteraction);
-              window.removeEventListener("touchstart", startOnInteraction);
             };
 
-            window.addEventListener("click", startOnInteraction, { once: true, passive: true });
-            window.addEventListener("keydown", startOnInteraction, { once: true, passive: true });
-            window.addEventListener("scroll", startOnInteraction, { once: true, passive: true });
-            window.addEventListener("touchstart", startOnInteraction, {
-              once: true,
-              passive: true,
+            const events = ["touchstart", "touchend", "pointerdown", "click", "keydown"] as const;
+            const removeInteractionListeners = () => {
+              events.forEach((ev) => {
+                window.removeEventListener(ev, unlockAndPlay);
+                document.removeEventListener(ev, unlockAndPlay);
+              });
+            };
+
+            events.forEach((ev) => {
+              window.addEventListener(ev, unlockAndPlay, { passive: true });
+              document.addEventListener(ev, unlockAndPlay, { passive: true });
             });
           });
       }
@@ -84,6 +96,19 @@ class HeistAudio {
       this.initBackgroundMusic();
       this.isMuted = false;
       return this.isMuted;
+    }
+
+    // If music was paused due to mobile browser autoplay restrictions,
+    // the user's first tap on the sound button is an intention to hear audio!
+    if (this.bgMusic.paused && !this.isMuted) {
+      this.bgMusic.volume = 0.7;
+      this.bgMusic
+        .play()
+        .then(() => {
+          this.playAccessGranted();
+        })
+        .catch(() => {});
+      return false;
     }
 
     this.isMuted = !this.isMuted;
